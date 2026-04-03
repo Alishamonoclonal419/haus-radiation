@@ -1,211 +1,557 @@
-# Task 2 — First radiation observable in vacuum
+# Haus Radiation Project Plan
 
-## Goal
+## Project aim
 
-Move from the source-spectrum object
+Build a first-principles computational project starting from H. A. Haus, *On the radiation from point charges* (1986), then extend it into a serious scientific machine learning project only after the forward physics is clean and validated.
 
-\[
-\mathbf J(\mathbf k,\omega)
-\]
+The project will proceed in layers:
 
-to a first radiation-level observable in vacuum.
+1. Extract the exact minimum physics from Haus.
+2. Build the forward Fourier-domain source-current solver.
+3. Extract the radiating part in vacuum.
+4. Validate against known physical behavior and reference formulations.
+5. Extend to media.
+6. Formulate an inverse problem.
+7. Add SciML only where it solves a real bottleneck.
 
-This is still a structural radiation calculation, not yet a fully normalized energy-flux formula.
+The central rule is simple:
 
----
-
-## Physical idea
-
-Haus’s Fourier-domain interpretation says that radiation is associated with those source Fourier components that match propagating electromagnetic modes.
-
-In vacuum, propagating waves satisfy
-
-\[
-k=\omega/c.
-\]
-
-So for observation direction \(\hat{\mathbf n}\), the source must be evaluated on
-
-\[
-\mathbf k_{\rm rad}=\frac{\omega}{c}\hat{\mathbf n}.
-\]
-
-But not every component of the current contributes to radiation. The far-field radiation is transverse, so we must keep only the transverse part of the source:
-
-\[
-\mathbf J_\perp
-=
-\hat{\mathbf n}\times(\hat{\mathbf n}\times \mathbf J).
-\]
+**Physics first, code second, SciML last.**
 
 ---
 
-## First numerical radiation observable
+# Planning philosophy
 
-For this stage, define the structural vacuum radiation observable
+Every task must answer five questions:
 
-\[
-I(\omega,\hat{\mathbf n}) \propto |\mathbf J_\perp(\mathbf k_{\rm rad},\omega)|^2.
-\]
+1. What physical quantity are we computing?
+2. Why is it the right quantity?
+3. What equation justifies it?
+4. How do we implement it numerically?
+5. How do we know the output matches the physics?
 
-This is enough to test the core physical distinction:
-
-- constant velocity in vacuum should not radiate,
-- oscillatory motion should radiate.
-
----
-
-## Why the 1D benchmark is not enough for radiation
-
-For Task 1, 1D motion along \(z\) was fine because we were only testing the source spectrum.
-
-For radiation, however, if we keep the motion exactly collinear with the observation direction and only track \(J_z\), the transverse projection can become degenerate or misleading.
-
-So for Task 2 we should use a simple 3D benchmark trajectory.
-
-The cleanest choice is oscillatory motion along \(z\), but we observe at varying polar angle \(\theta\). Then
-
-\[
-\hat{\mathbf n}=(\sin\theta,0,\cos\theta).
-\]
-
-The source current is still along \(\hat z\), but the transverse projection is nonzero except along the axis.
+We do not move to a later phase unless the current phase has a clear validation target.
 
 ---
 
-## 3D source current for z-directed motion
+# Full task ladder
 
-For motion
+## Phase 0 — Physics foundation from Haus
 
-\[
+### Task 0.1
+
+Extract the minimum equation chain from the paper:
+
+* point-charge charge density,
+* point-charge current density,
+* spatial Fourier transform,
+* space-time Fourier transform,
+* propagating-wave condition,
+* transverse projection,
+* constant-velocity interpretation,
+* oscillatory-motion example,
+* medium modification.
+
+### Task 0.2
+
+Rewrite the physics in your own words as a compact derivation note.
+
+### Task 0.3
+
+Define the computational observables that will be implemented later.
+
+**Exit condition:** the forward problem is defined precisely enough that the code has a clear target.
+
+---
+
+## Phase 1 — Basic forward solver
+
+### Task 1
+
+Implement the Fourier-domain source current for 1D motion:
+
+[
+J_z(k_z,\omega)=q\int dt,v(t),e^{-ik_z z(t)}e^{i\omega t}.
+]
+
+### Task 2
+
+Implement two benchmark trajectories:
+
+* constant velocity,
+* sinusoidal motion.
+
+### Task 3
+
+Plot:
+
+* heatmap of (|J_z(k_z,\omega)|) for constant velocity,
+* spectrum for sinusoidal motion.
+
+### Task 4
+
+Check expected structure:
+
+* constant velocity gives a ridge near (\omega=k_z v),
+* sinusoidal motion gives harmonics.
+
+**Exit condition:** the source spectrum behaves as physics predicts.
+
+---
+
+## Phase 2 — Radiation extraction in vacuum
+
+### Task 5
+
+Implement the vacuum propagating-mode condition:
+
+[
+\mathbf k = \frac{\omega}{c}\hat{\mathbf n}.
+]
+
+### Task 6
+
+Implement the transverse projection:
+
+[
+\mathbf J_\perp = \hat{\mathbf n}\times(\hat{\mathbf n}\times \mathbf J).
+]
+
+### Task 7
+
+Define the numerical radiation observable:
+
+[
+I(\omega,\hat{\mathbf n}) \propto |\mathbf J_\perp|^2.
+]
+
+### Task 8
+
+Test vacuum behavior:
+
+* constant velocity gives negligible radiation,
+* sinusoidal motion radiates.
+
+**Exit condition:** the solver cleanly distinguishes nonradiating and radiating motion in vacuum.
+
+---
+
+## Phase 3 — Validation against known physics
+
+### Task 9
+
+Construct a reference far-field or retarded-time formulation for simple trajectories.
+
+### Task 10
+
+Compare:
+
+* angular patterns,
+* frequency peaks,
+* scaling behavior,
+* numerical convergence.
+
+### Task 11
+
+Document numerical artifacts:
+
+* finite-time broadening,
+* windowing effects,
+* resolution sensitivity.
+
+**Exit condition:** the Fourier solver survives serious physics scrutiny.
+
+---
+
+## Phase 4 — Medium extension
+
+### Task 12
+
+Implement nondispersive medium:
+
+[
+k = n\omega/c.
+]
+
+### Task 13
+
+Recover Cherenkov threshold behavior.
+
+### Task 14
+
+Extend to dispersive medium (n(\omega)).
+
+**Exit condition:** one framework handles vacuum and medium cases.
+
+---
+
+## Phase 5 — Inverse problem setup
+
+### Task 15
+
+Choose a low-dimensional trajectory family.
+
+### Task 16
+
+Define sparse/noisy observation models.
+
+### Task 17
+
+Recover trajectory parameters using classical optimization first.
+
+**Exit condition:** the project becomes an actual inverse problem rather than only forward simulation.
+
+---
+
+## Phase 6 — SciML layer
+
+### Task 18
+
+Choose either:
+
+* differentiable solver,
+* or physics-grounded surrogate.
+
+### Task 19
+
+Benchmark against classical inversion.
+
+### Task 20
+
+Add uncertainty and identifiability analysis.
+
+**Exit condition:** SciML solves a real bottleneck and is not just decorative.
+
+---
+
+# Task 0.1 — Core equations from Haus
+
+This section is the filled physics foundation extracted from the paper.
+
+## 1. Point-charge charge density
+
+For a point charge (q) moving on trajectory (\mathbf r_0(t)), the charge density is
+
+[
+\rho(\mathbf r,t)=q,\delta!\left(\mathbf r-\mathbf r_0(t)\right).
+]
+
+This says the entire charge is concentrated at the instantaneous particle position.
+
+Here:
+
+* (\mathbf r) is the field point,
+* (t) is time,
+* (\mathbf r_0(t)) is the source trajectory.
+
+This is the starting source description in real space.
+
+---
+
+## 2. Point-charge current density
+
+The current density for the same moving point charge is
+
+[
+\mathbf J(\mathbf r,t)=q,\mathbf v(t),\delta!\left(\mathbf r-\mathbf r_0(t)\right),
+]
+
+where
+
+[
+\mathbf v(t)=\dot{\mathbf r}_0(t).
+]
+
+This expresses the physically obvious fact that a moving localized charge creates a localized current directed along its instantaneous velocity.
+
+This is the source that enters the wave equation.
+
+---
+
+## 3. Spatial Fourier transform
+
+Take the spatial Fourier transform of the current density:
+
+[
+\mathbf J(\mathbf k,t)=\int d^3r,\mathbf J(\mathbf r,t)e^{-i\mathbf k\cdot\mathbf r}.
+]
+
+Substituting the point-charge form gives
+
+[
+\mathbf J(\mathbf k,t)=q,\mathbf v(t)e^{-i\mathbf k\cdot\mathbf r_0(t)}.
+]
+
+This is the first key object in the project.
+
+Interpretation:
+
+* the velocity provides the current amplitude,
+* the phase (e^{-i\mathbf k\cdot\mathbf r_0(t)}) encodes the source motion in Fourier space.
+
+This is where the trajectory enters the spectral formulation.
+
+---
+
+## 4. Space-time Fourier transform
+
+Now take the time Fourier transform:
+
+[
+\mathbf J(\mathbf k,\omega)=\int dt,\mathbf J(\mathbf k,t)e^{i\omega t}.
+]
+
+Using the previous result,
+
+[
+\mathbf J(\mathbf k,\omega)=q\int dt,\mathbf v(t)e^{-i\mathbf k\cdot\mathbf r_0(t)}e^{i\omega t}.
+]
+
+This is the main source quantity for the project.
+
+For 1D motion along (z),
+
+[
 \mathbf r_0(t)=z(t)\hat z,
 \qquad
 \mathbf v(t)=v(t)\hat z,
-\]
+]
 
-the vector source is
+so the relevant scalar component becomes
 
-\[
-\mathbf J(\mathbf k,\omega)=\hat z\,J_z(k_z,\omega),
-\]
+[
+J_z(k_z,\omega)=q\int dt,v(t)e^{-ik_z z(t)}e^{i\omega t}.
+]
 
-with
-
-\[
-k_z = \mathbf k\cdot\hat z.
-\]
-
-On the vacuum propagating manifold,
-
-\[
-\mathbf k = \frac{\omega}{c}\hat{\mathbf n},
-\]
-
-so
-
-\[
-k_z = \frac{\omega}{c}\cos\theta.
-\]
-
-Therefore, for z-directed motion, the radiation observable can be built from
-
-\[
-J_z\!\left(\frac{\omega}{c}\cos\theta,\omega\right).
-\]
+This is exactly what will be implemented in the first code stage.
 
 ---
 
-## Transverse projection for z-directed current
+## 5. Radiation / propagating-mode condition
 
-Let
+The paper’s main physical interpretation is that radiation is associated with those Fourier components of the source that match propagating electromagnetic modes.
 
-\[
-\mathbf J = J_z \hat z.
-\]
+In vacuum, propagating electromagnetic waves satisfy
+
+[
+k=\omega/c.
+]
+
+So the radiating part of the source must be examined on the vacuum light cone in ((\mathbf k,\omega))-space.
+
+This is the spectral-selection idea at the core of the paper:
+not every source Fourier component becomes outgoing radiation.
+Only those compatible with real propagating waves do.
+
+---
+
+## 6. Transverse projection
+
+Far-field radiation depends on the transverse part of the source relative to the propagation direction.
+
+If the observation direction is (\hat{\mathbf n}), then the transverse radiating component is
+
+[
+\mathbf J_\perp = \hat{\mathbf n}\times(\hat{\mathbf n}\times\mathbf J).
+]
+
+This removes the longitudinal component and keeps the part compatible with transverse electromagnetic radiation.
+
+Physically:
+
+* the longitudinal part does not represent outgoing transverse radiation,
+* the far-field observable is built from the transverse projected current evaluated on the propagating manifold.
+
+This is the quantity we will later use to build radiation intensity maps.
+
+---
+
+## 7. Constant-velocity interpretation
+
+Consider uniform motion:
+
+[
+\mathbf r_0(t)=\mathbf v t.
+]
 
 Then
 
-\[
-\mathbf J_\perp
-=
-\hat{\mathbf n}\times(\hat{\mathbf n}\times \hat z\,J_z).
-\]
+[
+\mathbf J(\mathbf k,\omega)=q\int dt,\mathbf v,e^{-i\mathbf k\cdot\mathbf v t}e^{i\omega t}.
+]
 
-Its magnitude is
+This has support where
 
-\[
-|\mathbf J_\perp| = |J_z|\,\sin\theta.
-\]
+[
+\omega=\mathbf k\cdot\mathbf v.
+]
 
-So the first vacuum radiation observable becomes
+So the source spectrum lies on that kinematic relation.
 
-\[
-I(\omega,\theta)\propto \sin^2\theta\;
-\left|
-J_z\!\left(\frac{\omega}{c}\cos\theta,\omega\right)
-\right|^2.
-\]
+For subluminal uniform motion in vacuum, this does not meet the propagating-wave condition in the required way to produce free radiation. The source moves with the charge, but there is no synchronous coupling to freely propagating vacuum modes. That is why uniform motion in free space does not radiate in this framework.
 
-This is the working formula for Task 2.
+This is one of the central physical messages of the paper.
 
 ---
 
-## Expected physics checks
+## 8. Oscillatory-motion example
 
-### Constant velocity in vacuum
+The paper considers an oscillatory trajectory of the form
 
-For uniform motion, the source support is on
+[
+z(t)=d\sin(\omega_0 t).
+]
 
-\[
-\omega = k_z v.
-\]
+Then
 
-But on the propagating manifold,
+[
+v(t)=d\omega_0\cos(\omega_0 t).
+]
 
-\[
-k_z=\frac{\omega}{c}\cos\theta.
-\]
+Because the phase factor contains (e^{-ik_z d\sin(\omega_0 t)}), the resulting source spectrum contains harmonic structure. In the analytic treatment, this is naturally expressed through harmonic/Bessel expansions.
 
-So radiation would require
+Physical meaning:
 
-\[
-\omega=\frac{\omega}{c}v\cos\theta.
-\]
+* periodic motion produces discrete spectral lines,
+* higher harmonics appear depending on the oscillation amplitude and geometry,
+* this is the natural benchmark case for a radiating trajectory.
 
-For subluminal motion \(v<c\), this cannot hold for ordinary nonzero \(\omega\), except trivially at zero frequency. Therefore the vacuum radiation observable should be negligible.
-
-### Oscillatory motion in vacuum
-
-The oscillatory source contains harmonics at
-
-\[
-\omega = n\omega_0,
-\]
-
-and those harmonics can contribute on the vacuum propagating manifold. The angular factor \(\sin^2\theta\) also implies:
-
-- no radiation on axis (\(\theta=0,\pi\)),
-- strongest radiation away from the axis.
+This gives us the second benchmark for the forward solver.
 
 ---
 
-## What Task 2 should produce
+## 9. Medium modification
 
-1. Vacuum radiation map \(I(\omega,\theta)\) for sinusoidal z-motion.
-2. Vacuum radiation map \(I(\omega,\theta)\) for constant velocity.
-3. A comparison plot showing:
-   - constant velocity gives negligible signal,
-   - oscillatory motion gives nonzero signal concentrated at harmonics and away from the axis.
+In a medium, the propagating-wave condition changes because the phase velocity differs from (c).
+
+In the simplest refractive-index description,
+
+[
+k = n(\omega),\omega/c.
+]
+
+This changes the spectral matching condition between the source and the allowed propagating modes.
+
+As a result, constant-velocity motion can radiate if the phase-matching condition is satisfied. This is the spectral interpretation of Cherenkov-type radiation.
+
+So the paper’s vacuum/media contrast is not an extra detail. It is part of the same Fourier-selection picture:
+
+* vacuum: no radiating overlap for ordinary uniform motion,
+* medium: overlap can occur.
 
 ---
 
-## What success means
+## 10. Computational observables
 
-Task 2 is successful if:
+The physics above defines the observables for later coding.
 
-- the constant-velocity vacuum radiation observable is negligible,
-- the sinusoidal-motion vacuum radiation observable is nonzero,
-- the oscillatory case vanishes on-axis because of the transverse factor,
-- harmonic structure is visible in frequency.
+### Phase 1 observables
 
-This closes the first radiation-level step in vacuum.
+* (J_z(k_z,\omega)) for 1D motion,
+* heatmap of (|J_z(k_z,\omega)|),
+* line plots of (|J_z(\omega)|) at fixed (k_z).
+
+### Phase 2 observables
+
+* transverse projected current (\mathbf J_\perp),
+* radiation intensity proxy
+
+[
+I(\omega,\hat{\mathbf n}) \propto |\mathbf J_\perp|^2,
+]
+
+* angular radiation maps,
+* frequency-resolved radiation patterns.
+
+### Phase 4 observables
+
+* medium-modified radiation maps,
+* threshold behavior,
+* Cherenkov-angle recovery,
+* dispersive angular-frequency structure.
+
+### Final project observables
+
+* sparse observation vectors,
+* recovered trajectory parameters,
+* uncertainty or identifiability metrics,
+* speed/accuracy tradeoff for differentiable or surrogate-assisted inversion.
+
+---
+
+# Task 0.2 preview
+
+The next task will be to turn the above equations into a shorter derivation note in plain language, with emphasis on:
+
+* why uniform motion in vacuum does not radiate,
+* why periodic motion does,
+* why a medium changes the story,
+* and exactly what will be coded first.
+
+---
+
+# Task 1 preview
+
+The first code task will implement only the scalar 1D source-current transform:
+
+[
+J_z(k_z,\omega)=q\int dt,v(t)e^{-ik_z z(t)}e^{i\omega t}.
+]
+
+with two benchmark trajectories:
+
+* constant velocity,
+* sinusoidal motion.
+
+The first numerical checks will be:
+
+* ridge near (\omega=k_z v) for constant velocity,
+* harmonic peaks for sinusoidal motion.
+
+We will not move to radiation extraction until those are correct.
+
+---
+
+# Minimal milestone map
+
+## Milestone A
+
+Physics foundation complete.
+
+## Milestone B
+
+Source spectrum solver complete.
+
+## Milestone C
+
+Vacuum radiation extraction complete.
+
+## Milestone D
+
+Validation complete.
+
+## Milestone E
+
+Medium extension complete.
+
+## Milestone F
+
+Inverse problem complete.
+
+## Milestone G
+
+SciML layer complete.
+
+## Milestone H
+
+Paper-quality project complete.
+
+---
+
+# Final research target
+
+The final serious version of the project is:
+
+**A first-principles Fourier-domain radiation solver, grounded in Haus’s formulation, extended into a differentiable or surrogate-assisted inverse framework that recovers trajectory parameters from sparse radiation measurements.**
+
+That is the version worth showing to a PhD professor or shaping into a publishable computational physics / SciML paper.

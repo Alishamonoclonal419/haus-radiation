@@ -9,7 +9,11 @@ if SRC_PATH not in sys.path:
     sys.path.append(SRC_PATH)
 
 from trajectories import trajectory_constant_velocity, trajectory_sinusoidal
-from vacuum_radiation import structural_vacuum_intensity_for_z_motion
+from vacuum_radiation import (
+    structural_vacuum_intensity_for_z_motion,
+    apply_dc_filter,
+    max_nonzero_frequency_intensity,
+)
 
 
 def ensure_dir(path: str) -> None:
@@ -35,7 +39,27 @@ def plot_intensity_map(omega_grid, theta_grid, intensity, title, outpath):
     print(f"[Saved] {outpath}")
 
 
-def run_constant_velocity(fig_dir: str):
+def fixed_angle_plot(fig_dir, omega_cv, I_cv, omega_sin, I_sin, theta_grid, omega0):
+    theta_target = np.pi / 2
+    idx = np.argmin(np.abs(theta_grid - theta_target))
+
+    plt.figure(figsize=(9, 6))
+    plt.plot(omega_cv, I_cv[idx], label=r"Constant velocity, filtered, $\theta\approx\pi/2$")
+    plt.plot(omega_sin / omega0, I_sin[idx], label=r"Sinusoidal, filtered, $\theta\approx\pi/2$")
+    for n in range(-8, 9):
+        plt.axvline(n, linestyle="--", linewidth=0.8, alpha=0.25)
+    plt.xlabel(r"$\omega$ (constant velocity) / $\omega/\omega_0$ (sinusoidal)")
+    plt.ylabel(r"$I_{\rm filt}$")
+    plt.title("Task 2.1: Fixed-Angle Comparison with DC Filtering")
+    plt.legend()
+    plt.tight_layout()
+    outpath = os.path.join(fig_dir, "task2_1_fixed_angle_filtered.png")
+    plt.savefig(outpath, dpi=200)
+    plt.close()
+    print(f"[Saved] {outpath}")
+
+
+def run_constant_velocity(fig_dir: str, omega_cut: float):
     q = 1.0
     c = 1.0
     v = 0.8
@@ -60,20 +84,25 @@ def run_constant_velocity(fig_dir: str):
         normalize=True,
     )
 
-    outpath = os.path.join(fig_dir, "task2_constant_velocity_vacuum_map.png")
+    I_filt = apply_dc_filter(omega_grid, I, omega_cut=omega_cut)
+
+    outpath = os.path.join(fig_dir, "task2_1_constant_velocity_filtered_map.png")
     plot_intensity_map(
         omega_grid,
         theta_grid,
-        I,
-        title="Task 2: Vacuum Radiation Observable — Constant Velocity",
+        I_filt,
+        title=fr"Task 2.1: Constant Velocity (DC filtered, $|\omega|<{omega_cut}$ removed)",
         outpath=outpath,
     )
 
-    print(f"Max constant-velocity vacuum intensity: {np.max(I):.6e}")
-    return omega_grid, theta_grid, I
+    max_raw = np.max(I)
+    max_nonzero = max_nonzero_frequency_intensity(omega_grid, I, omega_cut=omega_cut)
+    print(f"Max raw constant-velocity intensity:      {max_raw:.6e}")
+    print(f"Max nonzero-frequency constant intensity: {max_nonzero:.6e}")
+    return omega_grid, theta_grid, I_filt
 
 
-def run_sinusoidal(fig_dir: str):
+def run_sinusoidal(fig_dir: str, omega_cut: float):
     q = 1.0
     c = 1.0
     d = 1.0
@@ -99,62 +128,47 @@ def run_sinusoidal(fig_dir: str):
         normalize=True,
     )
 
-    outpath = os.path.join(fig_dir, "task2_sinusoidal_vacuum_map.png")
+    I_filt = apply_dc_filter(omega_grid, I, omega_cut=omega_cut)
+
+    outpath = os.path.join(fig_dir, "task2_1_sinusoidal_filtered_map.png")
     plot_intensity_map(
         omega_grid,
         theta_grid,
-        I,
-        title="Task 2: Vacuum Radiation Observable — Sinusoidal Motion",
+        I_filt,
+        title=fr"Task 2.1: Sinusoidal Motion (DC filtered, $|\omega|<{omega_cut}$ removed)",
         outpath=outpath,
     )
 
-    print(f"Max sinusoidal vacuum intensity: {np.max(I):.6e}")
-    return omega_grid, theta_grid, I, omega0
-
-
-def compare_fixed_angle(fig_dir: str, omega_cv, I_cv, omega_sin, I_sin, theta_grid, omega0):
-    theta_target = np.pi / 2
-    idx = np.argmin(np.abs(theta_grid - theta_target))
-
-    plt.figure(figsize=(9, 6))
-    plt.plot(omega_cv, I_cv[idx], label=r"Constant velocity, $\theta\approx\pi/2$")
-    plt.plot(omega_sin / omega0, I_sin[idx], label=r"Sinusoidal, $\theta\approx\pi/2$")
-    for n in range(-8, 9):
-        plt.axvline(n, linestyle="--", linewidth=0.8, alpha=0.25)
-    plt.xlabel(r"$\omega$ (constant-velocity curve) / $\omega/\omega_0$ (sinusoidal curve)")
-    plt.ylabel(r"$I$")
-    plt.title("Task 2: Fixed-Angle Comparison")
-    plt.legend()
-    plt.tight_layout()
-
-    outpath = os.path.join(fig_dir, "task2_fixed_angle_comparison.png")
-    plt.savefig(outpath, dpi=200)
-    plt.close()
-    print(f"[Saved] {outpath}")
+    max_raw = np.max(I)
+    max_nonzero = max_nonzero_frequency_intensity(omega_grid, I, omega_cut=omega_cut)
+    print(f"Max raw sinusoidal intensity:      {max_raw:.6e}")
+    print(f"Max nonzero-frequency sinusoidal:  {max_nonzero:.6e}")
+    return omega_grid, theta_grid, I_filt, omega0
 
 
 def main():
     fig_dir = os.path.join(PROJECT_ROOT, "figures")
     ensure_dir(fig_dir)
 
-    omega_cv, theta_grid, I_cv = run_constant_velocity(fig_dir)
-    omega_sin, theta_grid2, I_sin, omega0 = run_sinusoidal(fig_dir)
+    omega_cut = 0.3
 
-    compare_fixed_angle(
+    omega_cv, theta_grid, I_cv_filt = run_constant_velocity(fig_dir, omega_cut=omega_cut)
+    omega_sin, theta_grid2, I_sin_filt, omega0 = run_sinusoidal(fig_dir, omega_cut=omega_cut)
+
+    fixed_angle_plot(
         fig_dir=fig_dir,
         omega_cv=omega_cv,
-        I_cv=I_cv,
+        I_cv=I_cv_filt,
         omega_sin=omega_sin,
-        I_sin=I_sin,
+        I_sin=I_sin_filt,
         theta_grid=theta_grid,
         omega0=omega0,
     )
 
-    print("\nTask 2 pass condition:")
-    print("1. Constant velocity in vacuum gives negligible intensity")
-    print("2. Sinusoidal motion gives nonzero intensity")
-    print("3. Sinusoidal intensity vanishes near theta = 0 and pi")
-    print("4. Harmonic structure appears in frequency")
+    print("\nTask 2.1 pass condition:")
+    print("1. Constant-velocity signal is negligible outside the DC band")
+    print("2. Sinusoidal harmonics survive outside the DC band")
+    print("3. Sinusoidal intensity still vanishes near theta = 0 and pi")
 
 
 if __name__ == "__main__":
